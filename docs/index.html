@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predictive Content Refresh Scoring in Organic Search</title>
+  <style>
+    :root { --bg: #f8fafc; --card: #ffffff; --text: #334155; --heading: #0f172a; --primary: #2563eb; --border: #e2e8f0; --code-bg: #f1f5f9; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.7; color: var(--text); background: var(--bg); margin: 0; padding: 40px 20px; }
+    .container { max-width: 860px; margin: 0 auto; background: var(--card); padding: 40px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    h1 { font-size: 2rem; color: var(--heading); line-height: 1.25; margin-bottom: 8px; }
+    .meta { font-size: 0.95rem; color: #64748b; margin-bottom: 24px; }
+    .abstract { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 4px; margin-bottom: 36px; }
+    h2 { font-size: 1.35rem; color: var(--heading); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 36px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95rem; }
+    th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+    th { background: var(--code-bg); color: var(--heading); }
+    code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    footer { margin-top: 50px; border-top: 1px solid var(--border); padding-top: 20px; font-size: 0.9rem; color: #64748b; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Predictive Content Refresh Scoring in Organic Search: A Decision-Support Framework</h1>
+  <div class="meta"><strong>Lane:</strong> Refresh / Content Opportunity Scoring &nbsp;|&nbsp; <strong>Model:</strong> Random Forest Classifier</div>
+
+  <div class="abstract">
+    <strong>Abstract:</strong> Maintaining organic search performance across large web properties requires identifying decaying content prior to irreversible traffic drops. This research constructs a decision-moment machine learning pipeline that predicts forward 60-day organic impression decay using Google Search Console telemetry and metadata available at anchor $T_0$. Evaluated on a grouped client holdout split using FlyRank warehouse data, our Random Forest classifier achieves an <strong>observed Precision@20 of 0.85</strong> and <strong>ROC-AUC of 0.824</strong>, outperforming a rule-based heuristic baseline (Precision@20: 0.65). The model powers an automated triage playbook that translates decay risk into specific editorial actions, providing a defensible decision-support mechanism without asserting causal search engine ranking claims.
+  </div>
+
+  <h2>1. Problem Statement</h2>
+  <p>Organic search performance decays non-linearly as search query intent evolves and competitor content emerges. Conventional heuristics (such as updating pages based solely on age) produce high false-positive rates. This study formulates content decay as a supervised top-$K$ ranking problem to prioritize editorial resources toward high-impact intervention opportunities.</p>
+
+  <h2>2. Data & Privacy Contract</h2>
+  <p>The study utilizes the FlyRank warehouse mid-panel observation month (<code>month=2026-03</code>) and forward outcome window (<code>2026-04</code> to <code>2026-06</code>). Unit of analysis is exactly one unique <code>(client_id, url)</code> pair. Excluded fields include raw search queries, brand navigational queries, and post-observation metrics to eliminate target leakage and ensure privacy compliance.</p>
+
+  <h2>3. Methodology & Leakage Prevention</h2>
+  <p>We apply a <strong>Grouped Split by <code>client_id</code></strong> (75% train / 25% test), ensuring no URL from a test client is present during training. Six decision-moment features are engineered (e.g., <code>log_impressions</code>, <code>ctr</code>, <code>avg_position</code>, <code>content_age_days</code>, <code>pos_ctr_interaction</code>). No forward-looking delta features are exposed during feature construction.</p>
+
+  <h2>4. Results vs. Baseline</h2>
+  <p>All models were evaluated on the identical unseen client holdout split:</p>
+  <table>
+    <thead><tr><th>Method</th><th>Precision@20</th><th>Precision@50</th><th>ROC-AUC</th></tr></thead>
+    <tbody>
+      <tr><td>Rule Baseline (Week 4 Heuristic)</td><td>0.650</td><td>0.580</td><td>0.692</td></tr>
+      <tr><td>Logistic Regression</td><td>0.700</td><td>0.640</td><td>0.748</td></tr>
+      <tr><td>Gradient Boosting (HistGB)</td><td>0.800</td><td>0.720</td><td>0.811</td></tr>
+      <tr><td><strong>Random Forest (Selected)</strong></td><td><strong>0.850</strong></td><td><strong>0.760</strong></td><td><strong>0.824</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Limitations & Honest Framing</h2>
+  <ul>
+    <li><strong>Observational, Not Causal:</strong> The model identifies patterns correlated with historical traffic loss; it does not claim that editorial intervention guarantees ranking improvements.</li>
+    <li><strong>Cross-Sectional Baseline:</strong> A single-month slice cannot decouple long-term decay from seasonal search volume declines.</li>
+    <li><strong>Scope Boundaries:</strong> Calibrated for informational and editorial hubs, not transactional checkout funnels.</li>
+  </ul>
+
+  <h2>6. Ranked Action Playbook</h2>
+  <table>
+    <thead><tr><th>Reason Code</th><th>Recommended Action</th><th>Priority</th><th>Trigger Condition</th></tr></thead>
+    <tbody>
+      <tr><td><code>REFRESH_STALE_HIGH_TRAFFIC</code></td><td><span class="badge badge-amber">EDITORIAL_DEEP_REWRITE</span></td><td>High</td><td>High volume, age &gt; 180 days, high decay probability.</td></tr>
+      <tr><td><code>FIX_CTR_UNDERPERFORMER</code></td><td><span class="badge badge-blue">TITLE_METADATA_UPDATE</span></td><td>High</td><td>Rank &le; 10, CTR &lt; 2.5% (SERP snippet mismatch).</td></tr>
+      <tr><td><code>QUICK_WIN_OPPORTUNITY</code></td><td><span class="badge badge-green">CONTENT_EXPANSION</span></td><td>Medium</td><td>Striking distance (ranks 9–20) with steady impressions.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. Reproducibility</h2>
+  <p>All training pipelines, data validation scripts, and metric receipts are reproducible from the repository: <a href="https://github.com/ARHAM008/flyrank-ml-internship" target="_blank">github.com/ARHAM008/flyrank-ml-internship</a>.</p>
+
+  <footer>
+    <strong>Acknowledgments & Data Credit:</strong> Built on the FlyRank ML Internship dataset (<a href="https://flyrank.ai" target="_blank">https://flyrank.ai</a>).
+  </footer>
+
+</div>
+</body>
+</html>
